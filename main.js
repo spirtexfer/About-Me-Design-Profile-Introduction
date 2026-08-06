@@ -132,7 +132,11 @@ const scrollCue = document.getElementById('scrolldown');
 const cursorEl = document.getElementById('cursor');
 const cursorRing = document.getElementById('cursor-ring');
 
-if (cursorEl) document.documentElement.classList.add('has-pointer');
+/* Reduced motion never starts the frame loop, so lastFrame stays 0 and the
+   watchdog below can never fire. Hiding the real cursor there would hide it for
+   the whole visit with no way back, so leave the native cursor alone instead. */
+if (cursorEl && !reduced) document.documentElement.classList.add('has-pointer');
+if (reduced) [cursorEl, cursorRing].forEach(el => { if (el) el.style.display = 'none'; });
 
 let lastFrame = 0;
 function restoreCursor(why) {
