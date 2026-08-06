@@ -26,6 +26,8 @@
   --void-h: calc(var(--void-vh) * 100vh);
   --gap-hello: 0.7;
 
+  --tl-gap:   400px;
+
   --ease:   cubic-bezier(0.16, 1, 0.3, 1);
   --reveal: 1s;
   --stag:   0.04s;
@@ -93,6 +95,11 @@ main, .footer { position: relative; z-index: 2; }
 .fade.is-in { opacity: 1; transform: none; }
 
 [data-split="chars"] { --stag: 0.055s; }
+[data-split="chars"] .sp-i { white-space: pre; }
+
+.h2[data-beat="fly"] { text-align: center; }
+[data-beat="fly"] .sp-o { overflow: visible; }
+[data-beat="fly"] .sp-i { transition: none; will-change: transform, opacity; }
 
 @media (hover: hover) and (pointer: fine) {
   .has-pointer body,
@@ -526,7 +533,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 
 .tl {
   position: relative;
-  margin-top: clamp(3rem, 7vw, 5rem);
+  margin-top: var(--tl-gap);
 }
 .tl::before {
   content: "";
@@ -642,6 +649,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 .tl__now .tl__note { margin-top: 1rem; }
 
 @media (max-width: 860px) {
+  .tl { margin-top: calc(var(--tl-gap) * 0.5); }
   .tl::before { left: 3px; margin-left: 0; }
   .tl__hold,
   .tl__item:nth-child(odd) .tl__hold,

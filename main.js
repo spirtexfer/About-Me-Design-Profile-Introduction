@@ -55,32 +55,42 @@ const CONFIG = {
   webLink:       96,
   webLinkAlpha: 0.5,
 
-  tlStepVh:     0.8,
-  tlHoldVh:    0.34,
-  tlRevealVh:  0.55,
-  tlStart:     0.72,
+  tlStepVh:     1,
+  tlHoldVh:    0.3,
+  tlRevealVh:  0.8,
+  tlStart:     0.6,
+
+  flyX:        1200,
+  flyArc:      -105,
+  flyRot:        10,
+  flyLag:         8,
+  flyHold:      0.2,
+  flyEase:        4,
+  flySpan:        1,
+  flyStart:    0.82,
+  tlGapPx:      400,
 
   tlDots:         1,
-  tlSpacing:     26,
-  tlTurnPx:     420,
-  tlRadius:      54,
+  tlSpacing:     25,
+  tlTurnPx:     300,
+  tlRadius:      30,
   tlSize:       2.6,
-  tlAlpha:     0.55,
-  tlSpin:    0.0012,
+  tlAlpha:        1,
+  tlSpin:      0.01,
 
-  stageVh:       6,
-  stageSpan:    0.25,
+  stageVh:       3,
+  stageSpan:    0.1,
   stLabel:      0,
   stRule:       0,
-  stPhoto:      0.2,
-  stTitle:      0.21,
-  stQuote:      0.4,
+  stPhoto:      0.15,
+  stTitle:      0.15,
+  stQuote:      0.3,
   stQuoteSpan:  0.5,
   quoteFade:     8,
 
   voidVh:         2,
-  darkInPx:      1500,
-  darkOutPx:    500,
+  darkInPx:      2000,
+  darkOutPx:    100,
   darkDots:       0,
 
   cursorSize:      10,
@@ -269,6 +279,7 @@ function measure() {
     const r = el.getBoundingClientRect();
     return {
       el, kind: el.dataset.beat,
+      letters: el.dataset.beat === 'fly' ? [...el.querySelectorAll('.sp-i')] : null,
       x: r.left - (el._tx || 0),
       y: r.top + sy - (el._ty || 0),
       w: r.width, h: r.height,
@@ -294,6 +305,8 @@ function measure() {
 
   document.documentElement.style.setProperty('--tl-step', CONFIG.tlStepVh);
   document.documentElement.style.setProperty('--tl-hold', CONFIG.tlHoldVh);
+  document.documentElement.style.setProperty('--tl-gap', CONFIG.tlGapPx + 'px');
+
 
   helixes = [...document.querySelectorAll('[data-helix]')].map(el => {
     const r = el.getBoundingClientRect();
@@ -483,6 +496,35 @@ function moveBeats() {
     } else if (b.kind === 'rise') {
       b.el._ty = (1 - p) * CONFIG.riseDist;
       b.el.style.setProperty('--ty', b.el._ty.toFixed(1) + 'px');
+    } else if (b.kind === 'fly') {
+      const raw = (vh * CONFIG.flyStart - (b.y - beatScroll))
+                  / Math.max(vh * CONFIG.flySpan, 1);
+      const reach = Math.abs(CONFIG.flyX);
+      const lag = Math.max(CONFIG.flyLag, 0.01);
+      const pw = Math.max(CONFIG.flyEase, 1);
+      const hold = Math.min(Math.max(CONFIG.flyHold, 0), 0.9);
+
+      /* Entry and exit get their own band with the hold between them, so no
+         letter can start leaving until every letter has reached the centre. */
+      const band = (1 - hold) / 2;
+      const pIn  = clamp01(raw / band);
+      const pOut = clamp01((raw - band - hold) / band);
+
+      const ls = b.letters || [];
+      const n = ls.length;
+      for (let k = 0; k < n; k++) {
+        const rank = n - 1 - k;              // last letter leads, first letter trails
+        const tin  = clamp01((pIn  * (n + lag) - rank) / lag);
+        const tout = clamp01((pOut * (n + lag) - rank) / lag);
+        const u = tin - 1 + tout;
+        const e = (u < 0 ? -1 : 1) * Math.pow(Math.abs(u), pw);
+        ls[k].style.transform =
+          'translate(' + (e * reach).toFixed(1) + 'px,'
+                       + (u * u * CONFIG.flyArc).toFixed(1) + 'px) rotate('
+                       + (-u * CONFIG.flyRot).toFixed(2) + 'deg)';
+        ls[k].style.opacity = (1 - Math.abs(e)).toFixed(3);
+      }
+      b.el.style.setProperty('--o', 1);
     } else if (b.kind === 'step') {
       const q = clamp01((beatScroll - (b.y - vh * CONFIG.tlStart))
                         / Math.max(vh * CONFIG.tlRevealVh, 1));
