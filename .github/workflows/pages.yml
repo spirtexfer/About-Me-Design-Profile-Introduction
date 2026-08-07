@@ -11,8 +11,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  # NOT "pages": GitHub's own pages-build-deployment workflow uses that name, and
+  # two of its runs are permanently stuck queued, holding the lock. Sharing the
+  # group means every run here waits behind runs that will never finish.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:

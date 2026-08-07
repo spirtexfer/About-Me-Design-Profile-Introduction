@@ -70,6 +70,19 @@ const CONFIG = {
   flyStart:    0.82,
   tlGapPx:      400,
 
+  hxProjVh:       1,
+  hxTurns:      1.5,
+  hxSnap:         5,
+  hxRadius:     500,
+  hxPersp:     1500,
+  hxCardW:      300,
+  hxCardH:      200,
+  hxSpan:       1.5,
+  hxAxis:       0.4,
+  hxBlur:        10,
+  hxFloor:      0.4,
+  hxGapPx:     1600,
+
   tlDots:         1,
   tlSpacing:     25,
   tlTurnPx:     300,
@@ -192,6 +205,7 @@ let stages = [];
 let helixes = [];
 let darkness = 0;
 const webPts = [];
+let helix = null;
 
 function splitText(el) {
   const mode = el.dataset.split;
@@ -236,6 +250,135 @@ document.querySelectorAll('[data-spread]').forEach(el => {
     }
   });
 });
+
+function setupHelix() {
+  const scene = document.getElementById('helix-scene');
+  const box = scene && scene.closest('.helix');
+  if (!box) { helix = null; return; }
+
+  const sources = [...document.querySelectorAll('#helix-data .hx-src')].map(el => ({
+    tag: el.dataset.tag || '',
+    title: el.dataset.title || '',
+    note: el.textContent.trim(),
+    href: el.dataset.href || '',
+    link: el.dataset.link || 'Website',
+  }));
+
+  /* One ring step per project, so the pass brings each one square on exactly
+     once. Sizing the ring off the list means adding a project widens the helix
+     rather than pushing one off the cycle. */
+  const perStrand = Math.max(sources.length, 2);
+  const total = perStrand * 2;
+
+  if (!helix || helix.cards.length !== total) {
+    scene.textContent = '';
+    const cards = [];
+    for (let i = 0; i < total; i++) {
+      const card = document.createElement('div');
+      card.className = 'hx__card';
+      const ph = document.createElement('div');
+      ph.className = 'ph ph--card';
+      card.appendChild(ph);
+      scene.appendChild(card);
+      cards.push(card);
+    }
+    helix = { cards };
+  }
+
+  /* One scale factor keeps the composition identical on every screen: the
+     reference steps radius, card size and perspective together per breakpoint. */
+  const k = Math.min(1, Math.max(vw / 1440, 0.45));
+
+  /* Size the section before measuring it: the scroll length is half a screen per
+     project now, so reading the rect first would map the pass onto a stale span. */
+  const st = document.documentElement.style;
+  st.setProperty('--hx-vh', (CONFIG.hxProjVh * perStrand).toFixed(2));
+  st.setProperty('--hx-gap', CONFIG.hxGapPx + 'px');
+  st.setProperty('--hx-persp', (CONFIG.hxPersp * k).toFixed(0) + 'px');
+  st.setProperty('--hx-cw', (CONFIG.hxCardW * k).toFixed(0) + 'px');
+  st.setProperty('--hx-ch', (CONFIG.hxCardH * k).toFixed(0) + 'px');
+  st.setProperty('--hx-axis', (CONFIG.hxAxis * 100).toFixed(2) + '%');
+
+  const r = box.getBoundingClientRect();
+  helix.sources = sources;
+  helix.perStrand = perStrand;
+  helix.travel = perStrand;
+  helix.radius = CONFIG.hxRadius * k;
+  helix.top = r.top + window.scrollY;
+  helix.height = r.height;
+  helix.shown = -1;
+  helix.tag = document.getElementById('helix-tag');
+  helix.title = document.getElementById('helix-title');
+  helix.note = document.getElementById('helix-note');
+  helix.link = document.getElementById('helix-link');
+
+  /* The card facing you at the start of the pass sits mid-strand, so shift the
+     mapping by half a strand to open on the first project rather than the sixth.
+     With an odd number of steps that mid-point falls between two cards, so round
+     the lead up and carry the leftover half step as a phase offset. */
+  const n = sources.length || 1;
+  const lead = Math.ceil(perStrand / 2);
+  helix.phase = lead - perStrand / 2;
+  helix.cards.forEach((card, i) => {
+    const v = Math.floor(i / 2) - lead + (i % 2) * Math.floor(n / 2);
+    card._src = ((v % n) + n) % n;
+  });
+}
+
+function moveHelix() {
+  if (!helix) return;
+
+  const per = helix.perStrand;
+  const span = vh * CONFIG.hxSpan;
+  const p = clamp01((beatScroll - helix.top) / Math.max(helix.height - vh, 1));
+
+  /* Detent: linear scroll, but eased inside each card step so the helix races
+     between projects and settles while one is square on. */
+  const s = p * helix.travel;
+  const i = Math.floor(s);
+  const f = s - i;
+  const k = Math.max(CONFIG.hxSnap, 1);
+  const eased = i + (f < 0.5 ? 0.5 * Math.pow(f * 2, k)
+                             : 1 - 0.5 * Math.pow((1 - f) * 2, k));
+
+  let best = -1, bestSrc = 0;
+  for (let c = 0; c < helix.cards.length; c++) {
+    const card = helix.cards[c];
+    const strand = c % 2;
+    let prog = ((Math.floor(c / 2) - eased - helix.phase) / per) % 1;
+    if (prog < 0) prog += 1;
+
+    const angle = (prog - 0.5) * CONFIG.hxTurns * 2 * Math.PI + strand * Math.PI;
+    const y = (prog - 0.5) * span;
+    const depth = (Math.cos(angle) + 1) / 2;
+
+    card.style.transform = 'translate(-50%,-50%) rotateY(' + angle.toFixed(4)
+      + 'rad) translateZ(' + helix.radius.toFixed(1) + 'px) translateY('
+      + y.toFixed(1) + 'px)';
+    card.style.opacity = (CONFIG.hxFloor + (1 - CONFIG.hxFloor) * depth * depth).toFixed(3);
+    card.style.filter = 'blur(' + ((1 - depth) * (1 - depth) * CONFIG.hxBlur).toFixed(2) + 'px)';
+    card.style.zIndex = Math.round(depth * 100);
+
+    const score = depth * (1 - Math.min(Math.abs(y) / (span * 0.5), 1));
+    if (score > best) { best = score; bestSrc = card._src; }
+  }
+
+  if (bestSrc !== helix.shown && helix.sources.length) {
+    helix.shown = bestSrc;
+    const src = helix.sources[bestSrc];
+    if (helix.tag) helix.tag.textContent = src.tag;
+    if (helix.title) helix.title.textContent = src.title;
+    if (helix.note) helix.note.textContent = src.note;
+    /* A project without a link simply has no anchor rather than a dead one. */
+    if (helix.link) {
+      helix.link.hidden = !src.href;
+      if (src.href) {
+        helix.link.href = src.href;
+        helix.link.textContent = src.link;
+      }
+    }
+  }
+}
 
 function measure() {
   vw = window.innerWidth;
@@ -325,6 +468,8 @@ function measure() {
   if (cursorEl) cursorEl.style.setProperty('--cursor-size', CONFIG.cursorSize + 'px');
   if (cursorRing) cursorRing.style.setProperty('--cursor-ring', CONFIG.cursorRing + 'px');
 
+  setupHelix();
+
   docH = document.documentElement.scrollHeight;
   dotCount = Math.min(Math.ceil((docH + vh * 2) / Math.max(CONFIG.spacing, 1)), 20000);
 
@@ -370,6 +515,7 @@ function measure() {
   updateDarkness();
   updateStages();
   moveBeats();
+  moveHelix();
   render();
 }
 
@@ -852,6 +998,7 @@ function frame(now) {
   updateDarkness();
   updateStages();
   moveBeats();
+  moveHelix();
   render();
   requestAnimationFrame(frame);
 }
@@ -883,7 +1030,7 @@ if (reduced) {
   if (scrollCue) scrollCue.style.setProperty('--arrow', '1');
   window.addEventListener('scroll', () => {
     current = beatScroll = window.scrollY;
-    moveBeats(); render();
+    moveBeats(); moveHelix(); render();
   }, { passive: true });
 } else {
   setHero(0, 0, 0);
