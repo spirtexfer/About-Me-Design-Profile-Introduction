@@ -25,11 +25,12 @@
 <header class="nav" id="nav">
   <a class="nav__mark" href="#top" aria-label="Victor, home"><span class="nav__logo"></span></a>
   <nav class="nav__links" aria-label="Main">
-    <a class="nav__link is-active" href="#top">Home</a>
-    <span class="nav__link is-soon" aria-disabled="true">Grade 8</span>
-    <span class="nav__link is-soon" aria-disabled="true">Grade 9</span>
-    <span class="nav__link is-soon" aria-disabled="true">Grade 10</span>
-    <span class="nav__link is-soon" aria-disabled="true">DP Design</span>
+    <a class="nav__link is-active" href="#top" data-nav-key="navHome">Home</a>
+    <a class="nav__link" href="#profile" data-nav-key="navProfile">Profile</a>
+    <a class="nav__link" href="#skills" data-nav-key="navSkills">Skills</a>
+    <a class="nav__link" href="#work" data-hx-group="Grade 8" data-nav-key="navGrade8">Grade 8</a>
+    <a class="nav__link" href="#work" data-hx-group="Grade 9" data-nav-key="navGrade9">Grade 9</a>
+    <a class="nav__link" href="#work" data-hx-group="Personal" data-nav-key="navPersonal">Personal Project</a>
   </nav>
 </header>
 
@@ -74,10 +75,14 @@
           <div class="stage__rule"></div>
 
           <div class="profile">
-            <div class="wipe wipe--up">
-              <figure class="profile__photo wipe__in" data-focus>
-                <img src="assets/portrait.png" alt="Portrait of Victor" width="390" height="562">
-              </figure>
+            <div class="profile__side">
+              <div class="wipe wipe--up">
+                <figure class="profile__photo wipe__in" data-focus>
+                  <img src="assets/portrait.png" alt="Portrait of Victor" width="390" height="562">
+                </figure>
+              </div>
+
+              <p class="wipe wipe--tag"><span class="label profile__tag wipe__in">Victor <span class="profile__tag-sep">|</span> Student Creator</span></p>
             </div>
 
             <div class="profile__text">
@@ -97,7 +102,7 @@
     </div>
 
     <div class="wrap">
-      <div class="skills">
+      <div class="skills" id="skills">
         <h2 class="h2" data-split="chars" data-beat="fly">Skills Inventory</h2>
         <ol class="tl" data-helix>
           <li class="tl__item" data-beat="step">
@@ -255,10 +260,10 @@
       <li class="hx-src" data-tag="Grade 9 / 02" data-title="Illuminate" data-link="Website" data-href="https://google.com">To be completed.</li>
       <li class="hx-src" data-tag="Grade 9 / 03" data-title="Amplifying Sound" data-link="Website" data-href="https://google.com">To be completed.</li>
       <li class="hx-src" data-tag="Grade 9 / 04" data-title="Final Client Project" data-link="Website" data-href="https://google.com">To be completed.</li>
-      <li class="hx-src" data-tag="Grade 10 / 01" data-title="Project Title" data-link="Website" data-href="https://google.com">Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam.</li>
-      <li class="hx-src" data-tag="Grade 10 / 02" data-title="Project Title" data-link="Website" data-href="https://google.com">At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque.</li>
-      <li class="hx-src" data-tag="Grade 10 / 03" data-title="Project Title" data-link="Website" data-href="https://google.com">Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio.</li>
-      <li class="hx-src" data-tag="DP Design / 01" data-title="Project Title" data-link="Website" data-href="https://google.com">Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates.</li>
+      <li class="hx-src" data-tag="Personal / 01" data-title="Voting System" data-link="Repository" data-href="https://github.com/spirtexfer/Instant-All-Purpose-Voting">My first published project on github. I experimented with making a simple voting system with some twists and Quality of Life features. The backend is currently unavalible as it has been closed, so a local host may be required.</li>
+      <li class="hx-src" data-tag="Personal / 02" data-title="Vanish Box" data-link="Repository" data-href="https://github.com/spirtexfer/vanish-box">My first app that I created and published. I aimed to create a tool to help me solve annnoying file transfers I experience every day. I still use it to this day!</li>
+      <li class="hx-src" data-tag="Personal / 03" data-title="Strixe" data-link="Repository" data-href="https://github.com/spirtexfer/strixe">Strixe is a web game I made in experimentation. It was a combination of my web and game development knowledge and a take on roguelikes</li>
+      <li class="hx-src" data-tag="Personal / 04" data-title="Velvet Revolution (Game)" data-link="Repository" data-href="https://github.com/spirtexfer/VelvetRevolutionGame">This project was made as my final summative for Individuals and Societies. Here I researched on the Velvet Revolution and made an historically accurate simulation game!</li>
     </ol>
 
   </section>

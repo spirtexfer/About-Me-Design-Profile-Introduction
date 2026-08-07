@@ -83,6 +83,19 @@ const CONFIG = {
   hxFloor:      0.4,
   hxGapPx:     1600,
 
+  navMs:       1500,
+  navSpy:       0.4,
+
+  /* Screens of drop past each tab's own anchor. A section can open on a lead-in
+     its anchor knows nothing about — profile starts on a two-screen void — and
+     landing on that reads as landing on nothing. */
+  navHome:        0,
+  navProfile:     3,
+  navSkills:  -0.35,
+  navGrade8:      0,
+  navGrade9:      0,
+  navPersonal:    0,
+
   tlDots:         1,
   tlSpacing:     25,
   tlTurnPx:     300,
@@ -96,6 +109,7 @@ const CONFIG = {
   stLabel:      0,
   stRule:       0,
   stPhoto:      0.15,
+  stTag:        0.15,
   stTitle:      0.15,
   stQuote:      0.3,
   stQuoteSpan:  0.5,
@@ -469,6 +483,7 @@ function measure() {
   if (cursorRing) cursorRing.style.setProperty('--cursor-ring', CONFIG.cursorRing + 'px');
 
   setupHelix();
+  measureNav();
 
   docH = document.documentElement.scrollHeight;
   dotCount = Math.min(Math.ceil((docH + vh * 2) / Math.max(CONFIG.spacing, 1)), 20000);
@@ -629,6 +644,7 @@ function updateStages() {
     s.setProperty('--w-label', (1 - step(CONFIG.stLabel)).toFixed(4));
     s.setProperty('--w-rule', step(CONFIG.stRule).toFixed(4));
     s.setProperty('--w-photo', (1 - step(CONFIG.stPhoto)).toFixed(4));
+    s.setProperty('--w-tag', (1 - step(CONFIG.stTag)).toFixed(4));
     s.setProperty('--w-title', (1 - step(CONFIG.stTitle)).toFixed(4));
     s.setProperty('--qp',
       clamp01((p - CONFIG.stQuote) / Math.max(CONFIG.stQuoteSpan, 0.01)).toFixed(4));
@@ -999,6 +1015,7 @@ function frame(now) {
   updateStages();
   moveBeats();
   moveHelix();
+  updateNavActive();
   render();
   requestAnimationFrame(frame);
 }
@@ -1022,6 +1039,95 @@ window.addEventListener('pointermove', (e) => {
 
 window.addEventListener('resize', measure);
 
+/* A grade isn't a section of its own, it's a run of cards inside the one helix
+   pass, so aim at the scroll offset that brings its first project square on.
+   moveHelix shows source t exactly when its detent lands on eased === t, which
+   happens at p === t / travel, so invert that rather than restate its constants
+   and drift the day hxSnap or hxProjVh is retuned. */
+function helixScrollY(group) {
+  if (!helix || !helix.sources || !helix.sources.length) return null;
+  const i = helix.sources.findIndex(s => (s.tag.split('/')[0] || '').trim() === group);
+  const box = document.querySelector('.helix');
+  if (i < 0 || !box) return null;
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  return top + (i / helix.travel) * Math.max(box.offsetHeight - vh, 1);
+}
+
+/* Fixed duration rather than fixed speed: a hop to the next section and a hop
+   across the whole helix should cost the reader the same wait, so distance sets
+   the pace. Easing out lets it settle onto the target instead of cutting dead. */
+let navAnim = 0;
+function navScrollTo(to) {
+  cancelAnimationFrame(navAnim);
+  const max = Math.max(document.documentElement.scrollHeight - vh, 0);
+  const end = Math.max(0, Math.min(to, max));
+  const from = window.scrollY;
+  if (reduced || Math.abs(end - from) < 2) { window.scrollTo({ top: end, behavior: 'instant' }); return; }
+
+  /* Position instantly each frame: the stylesheet sets scroll-behavior: smooth,
+     and a default scrollTo would hand the motion back to the browser's own
+     easing, which re-targets every frame and lags the whole way. */
+  const t0 = performance.now();
+  const step = (now) => {
+    const t = Math.min((now - t0) / CONFIG.navMs, 1);
+    window.scrollTo({ top: from + (end - from) * easeOut(t), behavior: 'instant' });
+    if (t < 1) navAnim = requestAnimationFrame(step);
+  };
+  navAnim = requestAnimationFrame(step);
+}
+
+/* Any real scroll input outranks the flight already in progress. */
+['wheel', 'touchstart', 'keydown'].forEach(ev =>
+  window.addEventListener(ev, () => cancelAnimationFrame(navAnim), { passive: true }));
+
+/* One resolver for both jobs: where a link flies to and the mark the spy tests
+   against are the same place by definition, so they can't drift apart. */
+/* Two questions, one anchor: where a click should land (anchor plus its drop)
+   and where the section actually starts (anchor alone, what the spy compares
+   against). Sharing the anchor keeps them consistent; separating the drop stops
+   a deep landing from leaving the previous tab lit across the lead-in. */
+function navTargetY(link, withDrop = true) {
+  const key = link.dataset.navKey;
+  const drop = withDrop && key && key in CONFIG ? vh * CONFIG[key] : 0;
+
+  const group = link.dataset.hxGroup;
+  const hit = group ? helixScrollY(group) : null;
+  if (hit !== null) return hit + drop;
+
+  const id = (link.getAttribute('href') || '').replace(/^#/, '');
+  if (!id || id === 'top') return drop;
+  const el = document.getElementById(id);
+  return el ? el.getBoundingClientRect().top + window.scrollY + drop : null;
+}
+
+let navMarks = [];
+function measureNav() {
+  navMarks = [...document.querySelectorAll('a.nav__link')]
+    .map(link => ({ link, y: navTargetY(link, false) }))
+    .filter(m => m.y !== null)
+    .sort((a, b) => a.y - b.y);
+}
+
+/* Light the section being read rather than the one last clicked. Testing against
+   beatScroll, not scrollY, keeps the mark changing in step with the helix the
+   reader is watching instead of running ahead of it. */
+function updateNavActive() {
+  if (!navMarks.length) return;
+  const at = beatScroll + vh * CONFIG.navSpy;
+  let cur = navMarks[0];
+  for (const m of navMarks) if (m.y <= at) cur = m;
+  for (const m of navMarks) m.link.classList.toggle('is-active', m === cur);
+}
+
+document.querySelectorAll('a.nav__link, a.nav__mark').forEach(link => {
+  link.addEventListener('click', (e) => {
+    const y = navTargetY(link);
+    if (y === null) return;
+    e.preventDefault();
+    navScrollTo(y);
+  });
+});
+
 target = current = beatScroll = window.scrollY;
 measure();
 
@@ -1030,7 +1136,7 @@ if (reduced) {
   if (scrollCue) scrollCue.style.setProperty('--arrow', '1');
   window.addEventListener('scroll', () => {
     current = beatScroll = window.scrollY;
-    moveBeats(); moveHelix(); render();
+    moveBeats(); moveHelix(); updateNavActive(); render();
   }, { passive: true });
 } else {
   setHero(0, 0, 0);
