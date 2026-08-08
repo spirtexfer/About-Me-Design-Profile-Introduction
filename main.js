@@ -59,6 +59,8 @@ const CONFIG = {
   tlHoldVh:    0.3,
   tlRevealVh:  0.8,
   tlStart:     0.6,
+  tlNowVh:      1,
+  tlTailPx:  -200,
 
   flyX:        1200,
   flyArc:      -105,
@@ -87,7 +89,7 @@ const CONFIG = {
   hxRoom:         0.5,
   hxFadeHold:     0,
   hxFadeVh:       1,
-  hxGapPx:      1600,
+  hxGapPx:      800,
 
   navMs:       1500,
   navSpy:       0.4,
@@ -552,6 +554,8 @@ function measure() {
   document.documentElement.style.setProperty('--tl-step', CONFIG.tlStepVh);
   document.documentElement.style.setProperty('--tl-hold', CONFIG.tlHoldVh);
   document.documentElement.style.setProperty('--tl-gap', CONFIG.tlGapPx + 'px');
+  document.documentElement.style.setProperty('--tl-now', CONFIG.tlNowVh);
+  document.documentElement.style.setProperty('--tl-tail', CONFIG.tlTailPx + 'px');
 
 
   helixes = [...document.querySelectorAll('[data-helix]')].map(el => {

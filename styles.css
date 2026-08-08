@@ -659,8 +659,11 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 
 .tl__now {
   position: relative;
-  height: calc(var(--tl-step, 0.8) * 100vh);
+  height: calc(var(--tl-now, var(--tl-step, 0.8)) * 100vh);
 }
+/* Space between the last timeline card and the work section. Additive so the
+   responsive --section-y still sets the floor; a negative value trims it. */
+.section--profile { padding-bottom: calc(var(--section-y) + var(--tl-tail, 0px)); }
 .tl__now .tl__hold {
   width: min(100%, 46ch);
   margin-inline: auto;
