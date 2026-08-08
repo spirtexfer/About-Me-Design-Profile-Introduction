@@ -70,18 +70,24 @@ const CONFIG = {
   flyStart:    0.82,
   tlGapPx:      400,
 
-  hxProjVh:       1,
+  hxProjVh:       0.5,
   hxTurns:      1.5,
-  hxSnap:         5,
+  hxStep:      0.2,
+  hxRest:       300,
   hxRadius:     500,
-  hxPersp:     1500,
+  hxPersp:     3000,
   hxCardW:      300,
   hxCardH:      200,
   hxSpan:       1.5,
   hxAxis:       0.4,
-  hxBlur:        10,
+  hxBlur:        7.5,
   hxFloor:      0.4,
-  hxGapPx:     1600,
+  hxMain:       1.3,
+  hxMainMs:    0.14,
+  hxRoom:         0.5,
+  hxFadeHold:     0,
+  hxFadeVh:       1,
+  hxGapPx:      1600,
 
   navMs:       1500,
   navSpy:       0.4,
@@ -276,6 +282,7 @@ function setupHelix() {
     note: el.textContent.trim(),
     href: el.dataset.href || '',
     link: el.dataset.link || 'Website',
+    img: el.dataset.img || '',
   }));
 
   /* One ring step per project, so the pass brings each one square on exactly
@@ -306,7 +313,9 @@ function setupHelix() {
   /* Size the section before measuring it: the scroll length is half a screen per
      project now, so reading the rect first would map the pass onto a stale span. */
   const st = document.documentElement.style;
-  st.setProperty('--hx-vh', (CONFIG.hxProjVh * perStrand).toFixed(2));
+  /* The fade-in gets its own scroll length on top of the pass, so bringing the
+     helix up does not eat the run allotted to the first project. */
+  st.setProperty('--hx-vh', (CONFIG.hxProjVh * perStrand + CONFIG.hxFadeVh).toFixed(2));
   st.setProperty('--hx-gap', CONFIG.hxGapPx + 'px');
   st.setProperty('--hx-persp', (CONFIG.hxPersp * k).toFixed(0) + 'px');
   st.setProperty('--hx-cw', (CONFIG.hxCardW * k).toFixed(0) + 'px');
@@ -316,11 +325,15 @@ function setupHelix() {
   const r = box.getBoundingClientRect();
   helix.sources = sources;
   helix.perStrand = perStrand;
-  helix.travel = perStrand;
+  /* n projects need n-1 gaps between them, not n. Travelling a full n steps on
+     a ring of n lands eased back on 0 (mod n), so the tail of the pass replayed
+     the first project after the last one. */
+  helix.travel = Math.max(perStrand - 1, 1);
   helix.radius = CONFIG.hxRadius * k;
   helix.top = r.top + window.scrollY;
   helix.height = r.height;
   helix.shown = -1;
+  helix.pin = box.querySelector('.helix__pin');
   helix.tag = document.getElementById('helix-tag');
   helix.title = document.getElementById('helix-title');
   helix.note = document.getElementById('helix-note');
@@ -336,28 +349,76 @@ function setupHelix() {
   helix.cards.forEach((card, i) => {
     const v = Math.floor(i / 2) - lead + (i % 2) * Math.floor(n / 2);
     card._src = ((v % n) + n) % n;
+
+    /* Art is optional. Entries still waiting on a project keep the hatch, so a
+       half-filled gallery degrades quietly instead of showing holes. */
+    const ph = card.firstElementChild;
+    const shot = (sources[card._src] || {}).img;
+    if (ph) {
+      ph.classList.toggle('ph--shot', !!shot);
+      ph.style.backgroundImage = shot ? 'url("' + shot + '")' : '';
+    }
   });
+}
+
+/* The pass proper starts only once the fade-in has finished. Both the scroll
+   mapping and the nav targets have to skip the same lead-in, or a tab would
+   land the reader mid-fade. */
+function helixLead(travelPx) {
+  return Math.min(vh * (CONFIG.hxFadeHold + CONFIG.hxFadeVh), travelPx * 0.9);
 }
 
 function moveHelix() {
   if (!helix) return;
 
   const per = helix.perStrand;
+
   const span = vh * CONFIG.hxSpan;
-  const p = clamp01((beatScroll - helix.top) / Math.max(helix.height - vh, 1));
 
-  /* Detent: linear scroll, but eased inside each card step so the helix races
-     between projects and settles while one is square on. */
-  const s = p * helix.travel;
-  const i = Math.floor(s);
-  const f = s - i;
-  const k = Math.max(CONFIG.hxSnap, 1);
-  const eased = i + (f < 0.5 ? 0.5 * Math.pow(f * 2, k)
-                             : 1 - 0.5 * Math.pow((1 - f) * 2, k));
+  /* Room for the focused card, sideways. Widening the ring radius would do it
+     too, but radius is depth — a wider ring pulls the near card closer and the
+     perspective would grow every front card, fighting the point of scaling only
+     one. Pushing along X in the scene's own space moves cards apart on screen
+     and leaves depth alone. The focused card sits at sin(0), so it never moves;
+     its neighbours part around it. */
+  const spread = helix.radius * (CONFIG.hxMain - 1) * CONFIG.hxRoom;
 
-  let best = -1, bestSrc = 0;
+  /* The pin only sticks once its top reaches 0, so entering the section used to
+     show a half-composed helix clipped by the section edge. Hold it invisible
+     across the lead-in and bring it up on opacity instead: the first thing you
+     see is the finished first project, not the tail of the one before it. */
+  const travelPx = Math.max(helix.height - vh, 1);
+  const lead = helixLead(travelPx);
+  const scrolled = beatScroll - helix.top;
+
+  /* Hold blank first, then bring it up: the pause is what makes the helix read
+     as arriving rather than as having been there dimly the whole time. */
+  const hold = Math.min(vh * CONFIG.hxFadeHold, lead);
+  if (helix.pin) {
+    helix.pin.style.opacity =
+      clamp01((scrolled - hold) / Math.max(lead - hold, 1)).toFixed(3);
+  }
+
+  const p = clamp01((scrolled - lead) / Math.max(travelPx - lead, 1));
+
+  /* Scroll chooses a whole project, never a position between two. Crossing the
+     halfway point of a step moves the target on and the ring slides after it
+     under its own easing, so the reader is always either on a project or
+     watching it hand over — there is no in-between to come to rest in.
+     Chasing the target rather than replaying each step is what makes a fast
+     scroll go straight to where it landed instead of grinding through the
+     projects it skipped. */
+  const wantStep = Math.round(p * helix.travel);
+  if (helix.at === undefined) helix.at = wantStep;
+  helix.at += (wantStep - helix.at) * clamp01(CONFIG.hxStep);
+  const eased = helix.at;
+
+  /* Two passes. The card that wins focus has to be known before any card is
+     drawn, because exactly one of them is drawn larger — so place them all
+     first, pick the winner, then draw. */
+  const geo = helix.geo || (helix.geo = []);
+  let best = -1, bestSrc = 0, bestCard = -1;
   for (let c = 0; c < helix.cards.length; c++) {
-    const card = helix.cards[c];
     const strand = c % 2;
     let prog = ((Math.floor(c / 2) - eased - helix.phase) / per) % 1;
     if (prog < 0) prog += 1;
@@ -365,16 +426,40 @@ function moveHelix() {
     const angle = (prog - 0.5) * CONFIG.hxTurns * 2 * Math.PI + strand * Math.PI;
     const y = (prog - 0.5) * span;
     const depth = (Math.cos(angle) + 1) / 2;
-
-    card.style.transform = 'translate(-50%,-50%) rotateY(' + angle.toFixed(4)
-      + 'rad) translateZ(' + helix.radius.toFixed(1) + 'px) translateY('
-      + y.toFixed(1) + 'px)';
-    card.style.opacity = (CONFIG.hxFloor + (1 - CONFIG.hxFloor) * depth * depth).toFixed(3);
-    card.style.filter = 'blur(' + ((1 - depth) * (1 - depth) * CONFIG.hxBlur).toFixed(2) + 'px)';
-    card.style.zIndex = Math.round(depth * 100);
+    geo[c] = { angle, y, depth };
 
     const score = depth * (1 - Math.min(Math.abs(y) / (span * 0.5), 1));
-    if (score > best) { best = score; bestSrc = card._src; }
+    if (score > best) { best = score; bestSrc = helix.cards[c]._src; bestCard = c; }
+  }
+
+  for (let c = 0; c < helix.cards.length; c++) {
+    const card = helix.cards[c];
+    const g = geo[c];
+
+    /* Only the project being read grows. Easing toward the target rather than
+       setting it outright is what turns the handover into a swap — the outgoing
+       card settles back as the incoming one comes up, instead of both snapping
+       the instant the selection flips. */
+    if (card._grow === undefined) card._grow = 1;
+    const want = c === bestCard ? CONFIG.hxMain : 1;
+    card._grow += (want - card._grow) * clamp01(CONFIG.hxMainMs);
+
+    const dx = spread * Math.sin(g.angle);
+
+    card.style.transform = 'translate(-50%,-50%) translateX(' + dx.toFixed(1)
+      + 'px) rotateY(' + g.angle.toFixed(4)
+      + 'rad) translateZ(' + helix.radius.toFixed(1) + 'px) translateY('
+      + g.y.toFixed(1) + 'px) scale(' + card._grow.toFixed(4) + ')';
+    card.style.opacity = (CONFIG.hxFloor + (1 - CONFIG.hxFloor) * g.depth * g.depth).toFixed(3);
+    /* Only carry a filter when it actually does something. blur(0px) is not free:
+       it still forces the card into its own rasterised layer, which then gets
+       resampled through the 3D transform and frays the edges of a photo that is
+       perfectly sharp on disk. */
+    const blur = (1 - g.depth) * (1 - g.depth) * CONFIG.hxBlur;
+    card.style.filter = blur > 0.05 ? 'blur(' + blur.toFixed(2) + 'px)' : '';
+    /* The focused card is the one being read, so it sits above its neighbours
+       even when the ring puts one marginally nearer. */
+    card.style.zIndex = c === bestCard ? 101 : Math.round(g.depth * 100);
   }
 
   if (bestSrc !== helix.shown && helix.sources.length) {
@@ -1015,6 +1100,7 @@ function frame(now) {
   updateStages();
   moveBeats();
   moveHelix();
+  settleHelix();
   updateNavActive();
   render();
   requestAnimationFrame(frame);
@@ -1043,42 +1129,83 @@ window.addEventListener('resize', measure);
    pass, so aim at the scroll offset that brings its first project square on.
    moveHelix shows source t exactly when its detent lands on eased === t, which
    happens at p === t / travel, so invert that rather than restate its constants
-   and drift the day hxSnap or hxProjVh is retuned. */
+   and drift the day hxStep or hxProjVh is retuned. */
 function helixScrollY(group) {
   if (!helix || !helix.sources || !helix.sources.length) return null;
   const i = helix.sources.findIndex(s => (s.tag.split('/')[0] || '').trim() === group);
   const box = document.querySelector('.helix');
   if (i < 0 || !box) return null;
   const top = box.getBoundingClientRect().top + window.scrollY;
-  return top + (i / helix.travel) * Math.max(box.offsetHeight - vh, 1);
+  const travelPx = Math.max(box.offsetHeight - vh, 1);
+  const lead = helixLead(travelPx);
+  return top + lead + (i / helix.travel) * Math.max(travelPx - lead, 1);
 }
 
 /* Fixed duration rather than fixed speed: a hop to the next section and a hop
    across the whole helix should cost the reader the same wait, so distance sets
    the pace. Easing out lets it settle onto the target instead of cutting dead. */
 let navAnim = 0;
-function navScrollTo(to) {
+let navBusy = false;
+function navScrollTo(to, ms) {
   cancelAnimationFrame(navAnim);
   const max = Math.max(document.documentElement.scrollHeight - vh, 0);
   const end = Math.max(0, Math.min(to, max));
   const from = window.scrollY;
-  if (reduced || Math.abs(end - from) < 2) { window.scrollTo({ top: end, behavior: 'instant' }); return; }
+  const run = Math.max(ms || CONFIG.navMs, 1);
+  if (reduced || Math.abs(end - from) < 2) {
+    window.scrollTo({ top: end, behavior: 'instant' });
+    navBusy = false;
+    return;
+  }
+  navBusy = true;
 
   /* Position instantly each frame: the stylesheet sets scroll-behavior: smooth,
      and a default scrollTo would hand the motion back to the browser's own
      easing, which re-targets every frame and lags the whole way. */
   const t0 = performance.now();
   const step = (now) => {
-    const t = Math.min((now - t0) / CONFIG.navMs, 1);
+    const t = Math.min((now - t0) / run, 1);
     window.scrollTo({ top: from + (end - from) * easeOut(t), behavior: 'instant' });
     if (t < 1) navAnim = requestAnimationFrame(step);
+    else navBusy = false;
   };
   navAnim = requestAnimationFrame(step);
 }
 
-/* Any real scroll input outranks the flight already in progress. */
-['wheel', 'touchstart', 'keydown'].forEach(ev =>
-  window.addEventListener(ev, () => cancelAnimationFrame(navAnim), { passive: true }));
+/* Track real input, not scroll events: our own settle scrolls the window, and
+   reading that back as "the reader is still going" would keep it from ever
+   deciding they had stopped. */
+let lastInput = 0;
+['wheel', 'touchstart', 'touchmove', 'keydown'].forEach(ev =>
+  window.addEventListener(ev, () => {
+    lastInput = performance.now();
+    cancelAnimationFrame(navAnim);
+    navBusy = false;
+  }, { passive: true }));
+
+/* Once they stop, carry the page the rest of the way onto the project. The ring
+   has already slid there; without this the scrollbar is left mid-step, so the
+   next nudge in either direction could flip to a different project than the one
+   being looked at. Only inside the pass — elsewhere the page scrolls normally. */
+function settleHelix() {
+  if (!helix || reduced || !CONFIG.hxRest || navBusy) return;
+  if (performance.now() - lastInput < CONFIG.hxRest) return;
+
+  const box = document.querySelector('.helix');
+  if (!box) return;
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  const travelPx = Math.max(box.offsetHeight - vh, 1);
+  const lead = helixLead(travelPx);
+  const run = Math.max(travelPx - lead, 1);
+
+  const into = window.scrollY - top - lead;
+  if (into < 0 || into > run) return;
+
+  const step = Math.round((into / run) * helix.travel);
+  const want = top + lead + (step / helix.travel) * run;
+  if (Math.abs(want - window.scrollY) < 2) return;
+  navScrollTo(want, CONFIG.navMs * 0.45);
+}
 
 /* One resolver for both jobs: where a link flies to and the mark the spy tests
    against are the same place by definition, so they can't drift apart. */
