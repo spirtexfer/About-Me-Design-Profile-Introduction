@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project — Victor's Design Profile</title>
+<meta name="description" content="Project explainer from Victor's design profile.">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tomorrow:wght@300;400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="pp-body">
+
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+
+<header class="nav is-scrolled" id="nav">
+  <a class="nav__mark" href="index.html#top" aria-label="Victor, home"><span class="nav__logo"></span></a>
+  <nav class="nav__links" aria-label="Main">
+    <a class="nav__link" href="index.html#top">Home</a>
+    <a class="nav__link" href="index.html#profile">Profile</a>
+    <a class="nav__link" href="index.html#skills">Skills</a>
+    <span class="nav__group">
+      <a class="nav__link" href="index.html#work">Grade 8</a>
+      <ul class="nav__menu" data-group="Grade 8"></ul>
+    </span>
+    <span class="nav__group">
+      <a class="nav__link" href="index.html#work">Grade 9</a>
+      <ul class="nav__menu" data-group="Grade 9"></ul>
+    </span>
+    <span class="nav__group">
+      <a class="nav__link" href="index.html#work">Personal Project</a>
+      <ul class="nav__menu" data-group="Personal"></ul>
+    </span>
+  </nav>
+</header>
+
+<main class="pp" id="pp">
+  <section class="pp__top wrap">
+    <figure class="pp__shot">
+      <div class="ph ph--card" id="pp-shot"></div>
+    </figure>
+
+    <div class="pp__text">
+      <p class="label pp__tag" id="pp-tag"></p>
+      <h1 class="pp__title" id="pp-title">Project</h1>
+      <p class="pp__body" id="pp-body"></p>
+      <p class="pp__links">
+        <a class="helix__link" id="pp-link" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+        <a class="helix__link pp__back" href="index.html#work">Back to the gallery</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="pp__strip" id="pp-strip" data-cursor="native" aria-label="Project images">
+    <div class="pp__track" id="pp-track"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span class="footer__logo" aria-hidden="true"></span>
+    <a class="footer__mail" href="mailto:vichsi30@kas.tw">vichsi30@kas.tw</a>
+    <p class="footer__copy">&copy; 2026 Victor Hsieh</p>
+  </div>
+</footer>
+
+<script src="projects.js"></script>
+<script src="cursor.js"></script>
+<script src="transition.js"></script>
+<script src="project.js"></script>
+</body>
+</html>

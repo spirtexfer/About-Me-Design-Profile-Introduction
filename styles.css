@@ -288,7 +288,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   width: 100%;
   margin-bottom: clamp(0.9rem, 1.6vw, 1.5rem);
   font-family: var(--font-display);
-  font-size: clamp(0.62rem, 0.5rem + 0.28vw, 0.75rem);
+  font-size: 0.75rem;
   font-weight: 400;
   text-transform: uppercase;
   color: var(--type-2);
@@ -843,4 +843,157 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
     width: auto;
     transform: none;
   }
+}
+
+.pp-body { min-height: 100vh; display: flex; flex-direction: column; }
+.pp-body main { flex: 1 0 auto; }
+
+.pp {
+  padding-top: clamp(6rem, 12vh, 9rem);
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+.pp__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+  padding-bottom: clamp(1.8rem, 5vh, 3.5rem);
+}
+
+.pp__shot { margin: 0; }
+.pp__shot .ph { width: 100%; aspect-ratio: 3 / 2; }
+
+.pp__tag { margin-bottom: 0.9rem; }
+
+.pp__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.2rem + 3.2vw, 4rem);
+  font-weight: 300;
+  line-height: 1.05;
+  color: var(--type);
+}
+
+.pp__body {
+  margin-top: clamp(1rem, 2.4vh, 1.8rem);
+  max-width: 52ch;
+  color: var(--type-2);
+}
+
+.pp__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2.2rem);
+  margin-top: clamp(1.4rem, 3vh, 2.4rem);
+}
+
+.pp__strip {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(0.5rem, 2vh, 1.2rem);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.pp__strip.is-held { cursor: grabbing; }
+
+.pp__track {
+  display: flex;
+  gap: clamp(1rem, 2.6vw, 2.2rem);
+  width: max-content;
+  will-change: transform;
+}
+
+.pp__cell {
+  flex: 0 0 clamp(190px, 26vw, 380px);
+}
+.pp__cell .ph { width: 100%; aspect-ratio: 3 / 2; }
+
+@media (max-width: 860px) {
+  .pp__top { grid-template-columns: 1fr; }
+  .pp__shot { order: -1; }
+}
+
+.helix__links { display: flex; flex-wrap: wrap; gap: clamp(1rem, 2.6vw, 2rem); }
+
+.nav__group { position: relative; display: inline-flex; }
+
+.nav__menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 12;
+  min-width: max-content;
+  margin-top: 0.85rem;
+  padding: 0.7rem 0;
+  transform: translateX(-50%) translateY(-6px);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--rule-soft);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s var(--ease), transform 0.28s var(--ease), visibility 0.28s;
+}
+.nav__menu::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: -0.85rem;
+  height: 0.85rem;
+}
+
+.nav__item {
+  display: block;
+  padding: 0.42rem clamp(1rem, 1.6vw, 1.5rem);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--type-2);
+  white-space: nowrap;
+  transition: color 0.28s var(--ease), background 0.28s var(--ease);
+}
+.nav__item:hover,
+.nav__item:focus-visible { color: var(--type); background: var(--rule-soft); }
+
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) {
+  .nav__group:hover .nav__menu,
+  .nav__group:focus-within .nav__menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.nav__group:last-child .nav__menu {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(-6px);
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) {
+  .nav__group:last-child:hover .nav__menu,
+  .nav__group:last-child:focus-within .nav__menu {
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.42s var(--ease);
+}
+.is-entering .veil,
+.is-leaving .veil { opacity: 1; }
+.is-leaving .veil { transition: opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1); }
+.is-leaving .veil { pointer-events: auto; }
+.is-entering .veil { transition: none; }
+
+.nav__item.is-active { color: var(--type); }
+
+@media (hover: hover) and (pointer: fine) {
+  .cursor, .cursor-ring { transition: opacity 0.18s linear; }
+  .wants-native-cursor .cursor,
+  .wants-native-cursor .cursor-ring { opacity: 0; }
 }

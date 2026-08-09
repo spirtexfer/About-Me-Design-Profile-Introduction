@@ -31,9 +31,35 @@
     <a class="nav__link is-active" href="#top" data-nav-key="navHome">Home</a>
     <a class="nav__link" href="#profile" data-nav-key="navProfile">Profile</a>
     <a class="nav__link" href="#skills" data-nav-key="navSkills">Skills</a>
-    <a class="nav__link" href="#work" data-hx-group="Grade 8" data-nav-key="navGrade8">Grade 8</a>
-    <a class="nav__link" href="#work" data-hx-group="Grade 9" data-nav-key="navGrade9">Grade 9</a>
-    <a class="nav__link" href="#work" data-hx-group="Personal" data-nav-key="navPersonal">Personal Project</a>
+    <span class="nav__group">
+      <a class="nav__link" href="#work" data-hx-group="Grade 8" data-nav-key="navGrade8">Grade 8</a>
+      <ul class="nav__menu">
+        <li><a class="nav__item" href="project.html?p=logo-design">Logo Design</a></li>
+        <li><a class="nav__item" href="project.html?p=community-project">Community Project</a></li>
+        <li><a class="nav__item" href="project.html?p=programming-for-education">Programming for Education</a></li>
+      </ul>
+    </span>
+    <span class="nav__group">
+      <a class="nav__link" href="#work" data-hx-group="Grade 9" data-nav-key="navGrade9">Grade 9</a>
+      <ul class="nav__menu">
+        <li><a class="nav__item" href="project.html?p=meta-me">Meta Me</a></li>
+        <li><a class="nav__item" href="project.html?p=illuminate">Illuminate</a></li>
+        <li><a class="nav__item" href="project.html?p=amplifying-sound">Amplifying Sound</a></li>
+        <li><a class="nav__item" href="project.html?p=final-client-project">Final Client Project</a></li>
+      </ul>
+    </span>
+    <span class="nav__group">
+      <a class="nav__link" href="#work" data-hx-group="Personal" data-nav-key="navPersonal">Personal Project</a>
+      <ul class="nav__menu">
+        <li><a class="nav__item" href="project.html?p=voting-system">Voting System</a></li>
+        <li><a class="nav__item" href="project.html?p=vanish-box">Vanish Box</a></li>
+        <li><a class="nav__item" href="project.html?p=strixe">Strixe</a></li>
+        <li><a class="nav__item" href="project.html?p=velvet-revolution">Velvet Revolution (Game)</a></li>
+        <li><a class="nav__item" href="project.html?p=hunt-it-down">Hunt it down</a></li>
+        <li><a class="nav__item" href="project.html?p=tomera">Tomera</a></li>
+        <li><a class="nav__item" href="project.html?p=reservation-system">Reservation System</a></li>
+      </ul>
+    </span>
   </nav>
 </header>
 
@@ -250,7 +276,10 @@
           <p class="helix__tag" id="helix-tag"></p>
           <h2 class="helix__title" id="helix-title"></h2>
           <p class="helix__note" id="helix-note"></p>
-          <a class="helix__link" id="helix-link" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+          <span class="helix__links">
+            <a class="helix__link" id="helix-link" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+            <a class="helix__link" id="helix-more" href="#">Learn more &rarr;</a>
+          </span>
         </div>
       </div>
     </div>
@@ -286,6 +315,8 @@
   </div>
 </footer>
 
+<script src="projects.js"></script>
+<script src="transition.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

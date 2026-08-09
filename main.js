@@ -323,6 +323,7 @@ function setupHelix() {
   helix.title = document.getElementById('helix-title');
   helix.note = document.getElementById('helix-note');
   helix.link = document.getElementById('helix-link');
+  helix.more = document.getElementById('helix-more');
 
   const n = sources.length || 1;
   const lead = Math.ceil(perStrand / 2);
@@ -427,6 +428,12 @@ function moveHelix() {
         helix.link.href = src.href;
         helix.link.textContent = src.link;
       }
+    }
+
+    if (helix.more) {
+      const slug = typeof PROJECT_SLUG === 'function' ? PROJECT_SLUG(src.title) : '';
+      helix.more.hidden = !slug;
+      if (slug) helix.more.href = 'project.html?p=' + slug;
     }
   }
 }
