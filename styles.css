@@ -331,13 +331,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 }
 .ph--wide { aspect-ratio: 16 / 9; }
 .ph--card { aspect-ratio: 4 / 3; }
-/* A real shot fills the card and covers the hatch: the inline background-image
-   set per card outranks the gradient above, this just frames it.
 
-   No border on a photograph. The rule below is what draws the placeholder's
-   frame, but over a picture it becomes a pale 1px rim, and once the card is
-   scaled by the perspective that rim lands on fractions of a pixel and reads as
-   a torn, colour-fringed edge. The picture is its own frame. */
 .ph--shot {
   background-size: cover;
   background-position: center;
@@ -484,7 +478,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 .stage .label .wipe__in   { --w: var(--w-label, 0); }
 .stage .h2 .wipe__in      { --w: var(--w-title, 0); }
 .stage .wipe--up .wipe__in { --w: var(--w-photo, 0); }
-/* After .label above, so the tag rides its own step instead of the label's. */
+
 .stage .wipe--tag .wipe__in { --w: var(--w-tag, 0); }
 
 .stage__rule {
@@ -513,8 +507,6 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   align-items: start;
 }
 
-/* Photo and tag share one column: dropping the tag straight into .profile would
-   put it below whichever column is taller, which is the quote, not the photo. */
 .profile__side { display: block; }
 
 .wipe--tag { display: block; margin-top: 1.1rem; }
@@ -658,8 +650,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   position: relative;
   height: calc(var(--tl-now, var(--tl-step, 0.8)) * 100vh);
 }
-/* Space between the last timeline card and the work section. Additive so the
-   responsive --section-y still sets the floor; a negative value trims it. */
+
 .section--profile { padding-bottom: calc(var(--section-y) + var(--tl-tail, 0px)); }
 .tl__now .tl__hold {
   width: min(100%, 46ch);
@@ -741,11 +732,6 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   .footer__inner { justify-content: flex-start; }
 }
 
-/* PROJECTS HELIX */
-
-/* No bottom padding: the pin already clips the helix, and the section's usual
-   trailing space left that cut floating in open background above the footer.
-   Dropping it lands the clip exactly on the footer's rule. */
 .section--work { padding-top: var(--hx-gap); padding-bottom: 0; }
 
 .helix {
@@ -774,11 +760,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   transform-style: preserve-3d;
   will-change: transform, filter;
 }
-/* Hold the picture a few pixels inside the card. Flush with the card's edge it
-   sits on the boundary of the layer Chrome composites, which is clipped with no
-   antialiasing — and the perspective then magnifies those steps into the visible
-   staircase along the sides. Inset, the edge is painted into the texture and
-   resampled smoothly instead. */
+
 .hx__card .ph {
   width: calc(100% - 6px);
   height: calc(100% - 6px);
@@ -810,8 +792,6 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 }
 .helix__note { color: var(--type-2); }
 
-/* Same micro-type as the tag above the title, so the panel is bookended. The
-   resting hairline says "link"; the accent one sweeps in like the nav links. */
 .helix__link {
   position: relative;
   display: inline-block;
