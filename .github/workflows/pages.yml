@@ -39,7 +39,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          # GitHub's Pages publish service takes ~10 min for this site, and the
-          # action defaults to a 10 min ceiling, so deploys were a coin flip.
-          timeout: 1800000
           error_count: 20

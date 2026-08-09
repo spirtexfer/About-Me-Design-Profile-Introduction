@@ -156,8 +156,6 @@ const CONFIG = {
   axisHomeSm: 0.8,
 };
 
-const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 const back  = document.getElementById('field-back');
 const front = document.getElementById('field-front');
 const bx = back.getContext('2d');
@@ -167,11 +165,7 @@ const scrollCue = document.getElementById('scrolldown');
 const cursorEl = document.getElementById('cursor');
 const cursorRing = document.getElementById('cursor-ring');
 
-/* Reduced motion never starts the frame loop, so lastFrame stays 0 and the
-   watchdog below can never fire. Hiding the real cursor there would hide it for
-   the whole visit with no way back, so leave the native cursor alone instead. */
-if (cursorEl && !reduced) document.documentElement.classList.add('has-pointer');
-if (reduced) [cursorEl, cursorRing].forEach(el => { if (el) el.style.display = 'none'; });
+if (cursorEl) document.documentElement.classList.add('has-pointer');
 
 let lastFrame = 0;
 function restoreCursor(why) {
@@ -1156,7 +1150,7 @@ function navScrollTo(to, ms) {
   const end = Math.max(0, Math.min(to, max));
   const from = window.scrollY;
   const run = Math.max(ms || CONFIG.navMs, 1);
-  if (reduced || Math.abs(end - from) < 2) {
+  if (Math.abs(end - from) < 2) {
     window.scrollTo({ top: end, behavior: 'instant' });
     navBusy = false;
     return;
@@ -1192,7 +1186,7 @@ let lastInput = 0;
    next nudge in either direction could flip to a different project than the one
    being looked at. Only inside the pass — elsewhere the page scrolls normally. */
 function settleHelix() {
-  if (!helix || reduced || !CONFIG.hxRest || navBusy) return;
+  if (!helix || !CONFIG.hxRest || navBusy) return;
   if (performance.now() - lastInput < CONFIG.hxRest) return;
 
   const box = document.querySelector('.helix');
@@ -1262,23 +1256,14 @@ document.querySelectorAll('a.nav__link, a.nav__mark').forEach(link => {
 target = current = beatScroll = window.scrollY;
 measure();
 
-if (reduced) {
-  setHero(1, 1, 1);
-  if (scrollCue) scrollCue.style.setProperty('--arrow', '1');
-  window.addEventListener('scroll', () => {
-    current = beatScroll = window.scrollY;
-    moveBeats(); moveHelix(); updateNavActive(); render();
-  }, { passive: true });
-} else {
-  setHero(0, 0, 0);
-  requestAnimationFrame(frame);
-}
+setHero(0, 0, 0);
+requestAnimationFrame(frame);
 
 const revealables = document.querySelectorAll(
   '[data-split], [data-par], [data-focus], .skillset, .label[data-rule], .fade'
 );
 
-if (reduced || !('IntersectionObserver' in window)) {
+if (!('IntersectionObserver' in window)) {
   revealables.forEach(el => el.classList.add('is-in'));
 } else {
   const io = new IntersectionObserver((entries) => {

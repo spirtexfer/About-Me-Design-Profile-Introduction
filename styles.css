@@ -167,9 +167,6 @@ main, .footer { position: relative; z-index: 2; }
   0%, 100% { transform: translateY(0) rotate(45deg); }
   50%      { transform: translateY(6px) rotate(45deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .scrolldown::after { animation: none; }
-}
 
 .nav {
   position: fixed;
@@ -212,7 +209,7 @@ main, .footer { position: relative; z-index: 2; }
   align-items: center;
   gap: clamp(1rem, 2.4vw, 2.4rem);
   font-family: var(--font-display);
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -291,7 +288,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   width: 100%;
   margin-bottom: clamp(0.9rem, 1.6vw, 1.5rem);
   font-family: var(--font-display);
-  font-size: clamp(0.62rem, 0.5rem + 0.28vw, 0.85rem);
+  font-size: clamp(0.62rem, 0.5rem + 0.28vw, 0.75rem);
   font-weight: 400;
   text-transform: uppercase;
   color: var(--type-2);
@@ -374,7 +371,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   margin-left: auto;
   max-width: min(100%, 30ch);
   text-align: right;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: clamp(1.15rem, 0.9rem + 1.1vw, 1.9rem);
   font-weight: 300;
   line-height: 1.35;
@@ -388,8 +385,8 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   margin: clamp(9rem, 30vh, 20rem) auto 0;
   max-width: min(100%, 46ch);
   text-align: center;
-  font-family: var(--font-display);
-  font-size: clamp(1.05rem, 0.9rem + 0.7vw, 1.4rem);
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 0.9rem + 0.7vw, 1.45rem);
   font-weight: 300;
   line-height: 1.6;
   color: var(--type);
@@ -539,7 +536,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   margin-top: 1.8rem;
   padding-left: clamp(1.5rem, 3vw, 2.6rem);
   max-width: 46ch;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: clamp(1.05rem, 0.9rem + 0.7vw, 1.45rem);
   font-weight: 300;
   line-height: 1.55;
@@ -618,8 +615,8 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
 }
 .tl__item:nth-child(odd) .tl__when { justify-content: flex-end; }
 
-.tl__year  { font-size: clamp(1.05rem, 0.9rem + 0.5vw, 1.5rem); color: var(--type); }
-.tl__month { font-size: 0.7rem; color: var(--type-2); }
+.tl__year  { font-size: clamp(1.05rem, 0.9rem + 0.7vw, 1.45rem); color: var(--type); }
+.tl__month { font-size: 0.75rem; color: var(--type-2); }
 
 .tl__what {
   display: flex;
@@ -627,7 +624,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   gap: 0.65rem;
   margin-top: 0.6rem;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 1rem + 1vw, 2.1rem);
+  font-size: clamp(1.3rem, 0.9rem + 1.1vw, 2.1rem);
   font-weight: 400;
   line-height: 1.2;
   color: var(--type);
@@ -706,7 +703,7 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   justify-content: space-between;
   gap: 1.25rem;
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
 }
 
@@ -742,14 +739,6 @@ a.nav__link:hover::after { transform: scaleX(1); transform-origin: left; }
   .nav__links { gap: 0.9rem; font-size: 0.66rem; letter-spacing: 0.09em; }
   .hero { padding-top: 10rem; }
   .footer__inner { justify-content: flex-start; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .sp-i { transform: none !important; }
-  [data-par], [data-focus], .skillset { opacity: 1 !important; transform: none !important; }
-  .label[data-rule]::after { transform: scaleX(1) !important; }
-  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
 /* PROJECTS HELIX */
