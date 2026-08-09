@@ -156,6 +156,8 @@ const CONFIG = {
   axisHomeSm: 0.8,
 };
 
+const TAU = Math.PI * 2;   /* one whole turn, which is the unit the ring thinks in */
+
 const back  = document.getElementById('field-back');
 const front = document.getElementById('field-front');
 const bx = back.getContext('2d');
@@ -371,13 +373,13 @@ function moveHelix() {
 
   const span = vh * CONFIG.hxSpan;
 
-  /* Room for the focused card, sideways. Widening the ring radius would do it
-     too, but radius is depth — a wider ring pulls the near card closer and the
-     perspective would grow every front card, fighting the point of scaling only
-     one. Pushing along X in the scene's own space moves cards apart on screen
-     and leaves depth alone. The focused card sits at sin(0), so it never moves;
-     its neighbours part around it. */
-  const spread = helix.radius * (CONFIG.hxMain - 1) * CONFIG.hxRoom;
+  /* The ring is an ellipse, not a circle: wider across than it is deep. Room for
+     the focused card has to come from somewhere, and widening the depth radius
+     would pull the near card toward the camera — perspective would then enlarge
+     every front card, defeating the point of scaling exactly one. Stretching the
+     ring on X alone parts the neighbours sideways and leaves depth untouched.
+     The focused card sits at sin(0), so the stretch never moves it. */
+  const ringX = helix.radius + helix.radius * (CONFIG.hxMain - 1) * CONFIG.hxRoom;
 
   /* The pin only sticks once its top reaches 0, so entering the section used to
      show a half-composed helix clipped by the section edge. Hold it invisible
@@ -415,16 +417,32 @@ function moveHelix() {
   const geo = helix.geo || (helix.geo = []);
   let best = -1, bestSrc = 0, bestCard = -1;
   for (let c = 0; c < helix.cards.length; c++) {
-    const strand = c % 2;
-    let prog = ((Math.floor(c / 2) - eased - helix.phase) / per) % 1;
-    if (prog < 0) prog += 1;
+    const lane = c % 2;                 /* which of the two strands  */
+    const rung = Math.floor(c / 2);     /* this card's rung along it */
 
-    const angle = (prog - 0.5) * CONFIG.hxTurns * 2 * Math.PI + strand * Math.PI;
-    const y = (prog - 0.5) * span;
-    const depth = (Math.cos(angle) + 1) / 2;
-    geo[c] = { angle, y, depth };
+    /* Where the card sits along its strand, 0 at the top of the pass and 1 at
+       the bottom, wrapping so a strand is an endless loop rather than a list. */
+    let turn = ((rung - eased - helix.phase) / per) % 1;
+    if (turn < 0) turn += 1;
 
-    const score = depth * (1 - Math.min(Math.abs(y) / (span * 0.5), 1));
+    /* Sweep hxTurns whole revolutions over one pass. The second lane rides half
+       a revolution behind the first, and that offset is the whole trick — two
+       identical strands, out of phase, read as one double helix. */
+    const theta = TAU * (CONFIG.hxTurns * (turn - 0.5) + lane * 0.5);
+
+    /* Place it on the ring in the scene's own axes, then let the draw pass turn
+       it to face outward. Keeping x and z separate is what lets the ellipse be
+       wider than it is deep. */
+    const x = ringX * Math.sin(theta);
+    const z = helix.radius * Math.cos(theta);
+    const y = span * (turn - 0.5);
+
+    /* How far toward the viewer the card has come round: 0 at the back of the
+       ring, 1 at the front. Read straight off z, which we already have. */
+    const near = 0.5 + 0.5 * (z / helix.radius);
+    geo[c] = { theta, x, y, z, near };
+
+    const score = near * (1 - Math.min(Math.abs(y) / (span * 0.5), 1));
     if (score > best) { best = score; bestSrc = helix.cards[c]._src; bestCard = c; }
   }
 
@@ -440,22 +458,29 @@ function moveHelix() {
     const want = c === bestCard ? CONFIG.hxMain : 1;
     card._grow += (want - card._grow) * clamp01(CONFIG.hxMainMs);
 
-    const dx = spread * Math.sin(g.angle);
+    /* Move to the point, then turn on the spot so the card faces out of the
+       ring. Scale stays last so it acts in the card's own plane, after the
+       turn — otherwise growing the focused card would also skew it. */
+    card.style.transform = 'translate(-50%,-50%) translate3d('
+      + g.x.toFixed(2) + 'px,' + g.y.toFixed(2) + 'px,' + g.z.toFixed(2) + 'px) rotateY('
+      + g.theta.toFixed(4) + 'rad) scale(' + card._grow.toFixed(4) + ')';
 
-    card.style.transform = 'translate(-50%,-50%) translateX(' + dx.toFixed(1)
-      + 'px) rotateY(' + g.angle.toFixed(4)
-      + 'rad) translateZ(' + helix.radius.toFixed(1) + 'px) translateY('
-      + g.y.toFixed(1) + 'px) scale(' + card._grow.toFixed(4) + ')';
-    card.style.opacity = (CONFIG.hxFloor + (1 - CONFIG.hxFloor) * g.depth * g.depth).toFixed(3);
+    /* Distance reads as light and focus together: the far side of the ring sinks
+       toward hxFloor and softens, the near side is fully lit and sharp. Both
+       curves are squared so the falloff bites late and cards stay readable until
+       they are genuinely round the back. */
+    card.style.opacity =
+      (CONFIG.hxFloor + (1 - CONFIG.hxFloor) * g.near * g.near).toFixed(3);
     /* Only carry a filter when it actually does something. blur(0px) is not free:
        it still forces the card into its own rasterised layer, which then gets
        resampled through the 3D transform and frays the edges of a photo that is
        perfectly sharp on disk. */
-    const blur = (1 - g.depth) * (1 - g.depth) * CONFIG.hxBlur;
-    card.style.filter = blur > 0.05 ? 'blur(' + blur.toFixed(2) + 'px)' : '';
+    const far = 1 - g.near;
+    const soft = far * far * CONFIG.hxBlur;
+    card.style.filter = soft > 0.05 ? 'blur(' + soft.toFixed(2) + 'px)' : '';
     /* The focused card is the one being read, so it sits above its neighbours
        even when the ring puts one marginally nearer. */
-    card.style.zIndex = c === bestCard ? 101 : Math.round(g.depth * 100);
+    card.style.zIndex = c === bestCard ? 101 : Math.round(g.near * 100);
   }
 
   if (bestSrc !== helix.shown && helix.sources.length) {
