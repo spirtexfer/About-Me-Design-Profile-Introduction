@@ -58,7 +58,9 @@ function paint(src) {
   els.title.textContent = src.title;
   els.body.textContent = more.body || src.note;
 
-  if (src.img) {
+  if (more.video) {
+    buildVideo(more.video, src.title);
+  } else if (src.img) {
     els.shot.classList.add('ph--shot');
     els.shot.style.backgroundImage = 'url("' + src.img + '")';
   }
@@ -71,6 +73,30 @@ function paint(src) {
 
   const shots = (more.gallery || []).filter(Boolean);
   buildStrip(shots);
+}
+
+function youtubeId(value) {
+  const raw = String(value).trim();
+  if (/^[\w-]{11}$/.test(raw)) return raw;
+  const hit = raw.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/);
+  return hit ? hit[1] : '';
+}
+
+function buildVideo(value, title) {
+  const id = youtubeId(value);
+  if (!id) return;
+
+  const frame = document.createElement('iframe');
+  frame.src = 'https://www.youtube-nocookie.com/embed/' + id + '?rel=0';
+  frame.title = title;
+  frame.loading = 'lazy';
+  frame.allow = 'accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+  frame.allowFullscreen = true;
+  frame.referrerPolicy = 'strict-origin-when-cross-origin';
+
+  els.shot.classList.add('ph--video');
+  els.shot.dataset.cursor = 'native';
+  els.shot.appendChild(frame);
 }
 
 function buildStrip(shots) {

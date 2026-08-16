@@ -11,6 +11,7 @@ window.PROJECT_PAGES = {
   'illuminate':                { body: '', gallery: [] },
   'amplifying-sound':          { body: '', gallery: [] },
   'final-client-project':      { body: '', gallery: [] },
+  'design-3d-pen-video':       { body: '', gallery: [], video: '' },
   'voting-system':             { body: '', gallery: [] },
   'vanish-box':                { body: '', gallery: [] },
   'strixe':                    { body: '', gallery: [] },
